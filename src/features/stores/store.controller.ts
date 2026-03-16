@@ -14,13 +14,13 @@ export const getStoresController = async (req: Request, res: Response) => {
 };
 
 export const getStoreByIdController = async (req: Request, res: Response) => {
- const store = await getStoreByIdService(String(req.params.id));
+  const store = await getStoreByIdService(String(req.params.id));
   return res.json(store);
 };
 
 export const getMyStoreController = async (req: Request, res: Response) => {
   const user = getAuthUser(req);
- const store = await getStoreByIdService(String(req.params.id));
+  const store = await getStoreByUserIdService(user.id);
   return res.json(store);
 };
 

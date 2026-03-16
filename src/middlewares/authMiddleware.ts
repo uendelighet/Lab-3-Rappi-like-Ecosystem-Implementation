@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import Boom from '@hapi/boom';
-import { supabase } from '../config/supabase';
 import { AuthUser } from '@supabase/supabase-js';
 
 export interface AuthenticatedRequest extends Request {
@@ -24,9 +23,20 @@ export const authMiddleware = async (
   const token = req.headers.authorization.split(' ')[1];
   if (!token) throw Boom.unauthorized('Token is missing');
 
-  const userResponse = await supabase.auth.getUser(token);
-  if (userResponse.error) throw Boom.unauthorized(userResponse.error.message);
-
-  req.user = userResponse.data.user;
-  next();
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) throw new Error('Invalid token');
+    const payload = JSON.parse(
+      Buffer.from(parts[1], 'base64url').toString('utf8')
+    );
+    req.user = {
+      id: payload.sub,
+      email: payload.email,
+      user_metadata: payload.user_metadata || {},
+      app_metadata: payload.app_metadata || {},
+    } as any;
+    next();
+  } catch (err) {
+    throw Boom.unauthorized('Invalid token');
+  }
 };

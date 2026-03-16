@@ -7,13 +7,21 @@ export default function Dashboard({ onLogout }) {
   const [orders, setOrders] = useState([]);
   const [newProduct, setNewProduct] = useState({ name: '', price: '' });
   const [tab, setTab] = useState('products');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    getMyStore().then((res) => {
-      setStore(res.data);
-      getStoreProducts(res.data.id).then((r) => setProducts(r.data));
-    });
-    getStoreOrders().then((res) => setOrders(res.data));
+    getMyStore()
+      .then((res) => {
+        setStore(res.data);
+        getStoreProducts(res.data.id).then((r) => setProducts(r.data));
+      })
+      .catch((err) => {
+        setError('No se encontró tu tienda en la base de datos.');
+        console.error(err);
+      });
+    getStoreOrders()
+      .then((res) => setOrders(res.data))
+      .catch(() => {});
   }, []);
 
   const toggleStore = async () => {
@@ -37,6 +45,13 @@ export default function Dashboard({ onLogout }) {
     await updateOrderStatus(orderId, status);
     getStoreOrders().then((res) => setOrders(res.data));
   };
+
+  if (error) return (
+    <div style={{ padding: 24 }}>
+      <p style={{ color: 'red' }}>{error}</p>
+      <button onClick={onLogout}>Cerrar sesión</button>
+    </div>
+  );
 
   if (!store) return <p style={{ padding: 24 }}>Cargando...</p>;
 
